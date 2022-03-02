@@ -12,10 +12,17 @@ const typeDefs = gql`
         tecnologia: String
     }
 
+    input CursoInput {
+        tecnologia: String 
+    }
+
     type Query {
-        obtenerCursos : [Curso]
+        obtenerCursos(input: CursoInput!) : [Curso]
         obtenerTecnologia : [Tecnologia]
     }
 `;
+
+
+// El signo de exclamacion sirve para que el parametro input sea obligatorio
 
 module.exports=typeDefs;
