@@ -27,7 +27,7 @@ const resolvers = {
             // Guardarlo en la BD
             try {
                 const usuario = new Usuario(input);
-                usuario.save;
+                usuario.save();
                 return usuario;
             } catch (error) {
                 console.log(error);
