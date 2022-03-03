@@ -85,3 +85,20 @@ obtenerClientes: async ()=>{
     return clientes;
 }
 ```
+
+## Tipos de datos en GraphQL
+
+- INT
+Números enteros
+
+- Float 
+Números con decimales
+
+- String
+Cadenas de texto
+
+- ID
+Número único
+
+- Boolean
+True o false

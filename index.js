@@ -4,17 +4,14 @@ const typeDefs = require('./db/schema');
 
 const resolvers = require('./db/resolvers');
 
+const conectaDB = require('./config/db');
+
+conectaDB();
 
 // Servidor
 const server = new ApolloServer({
     typeDefs,
-    resolvers,
-    context: ()=>{
-        const miContext = "Hola";
-        return {
-            miContext
-        }
-    }
+    resolvers
 });
 
 server.listen().then(({url})=>{
