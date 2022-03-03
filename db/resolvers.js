@@ -1,5 +1,6 @@
 const Usuario = require('../models/Usuario');
 
+const bcryptjs = require('bcryptjs');
 
 
 // Resolvers
@@ -15,7 +16,7 @@ const resolvers = {
 
             // Revisar si el usuario ya esta registrado
             const existeUsuario = await Usuario.findOne({email});
-            console.log(existeUsuario);
+            // console.log(existeUsuario);
 
 
             if(existeUsuario){
@@ -24,9 +25,13 @@ const resolvers = {
 
             // Hashear la pass
 
-            // Guardarlo en la BD
+            const salt = await bcryptjs.genSalt(10);
+            input.password = await bcryptjs.hash(password, salt);
+
+            //  Guardarlo en la BD
             try {
                 const usuario = new Usuario(input);
+                console.log(usuario);
                 usuario.save();
                 return usuario;
             } catch (error) {
