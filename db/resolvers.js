@@ -27,6 +27,23 @@ const resolvers = {
             }catch (error){
                 console.log(error);
             }
+        },
+        obtenerProducto: async(_, {id})=>{ 
+            
+            // Revisar si existe el producto
+            const producto = await Producto.findById(id);
+            if (!producto) {
+                throw new Error('No existe el error');
+            }
+
+            return producto;
+            
+            try {
+                
+            } catch (error) {
+                console.log(error);
+            }
+
         }
     },
     Mutation: {
