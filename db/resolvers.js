@@ -6,30 +6,30 @@ const bcryptjs = require('bcryptjs');
 
 const jwt = require('jsonwebtoken');
 
-const creatToken=(usuario, secreta, expiresIn)=>{
+const creatToken = (usuario, secreta, expiresIn) => {
     console.log(usuario);
-    const {id, email, nombre, apellido} = usuario;
-    return jwt.sign( {id, nombre, apellido}, secreta, { expiresIn } );
+    const { id, email, nombre, apellido } = usuario;
+    return jwt.sign({ id, nombre, apellido }, secreta, { expiresIn });
 }
 
 // Resolvers
 const resolvers = {
     Query: {
-        obtenerUsuario: async (_,{token})=>{
+        obtenerUsuario: async (_, { token }) => {
             const usuarioId = await jwt.verify(token, process.env.SECRETA);
 
             return usuarioId;
         },
-        obtenerProductos: async()=>{
-            try{
+        obtenerProductos: async () => {
+            try {
                 const productos = await Producto.find({})
                 return productos
-            }catch (error){
+            } catch (error) {
                 console.log(error);
             }
         },
-        obtenerProducto: async(_, {id})=>{ 
-            
+        obtenerProducto: async (_, { id }) => {
+
             // Revisar si existe el producto
             const producto = await Producto.findById(id);
             if (!producto) {
@@ -37,23 +37,31 @@ const resolvers = {
             }
 
             return producto;
-            
-           
+
+
+        },
+        obtenerClientes: async()=>{
+            try {
+                const clientes = await Cliente.find({});
+                return clientes;
+            } catch (error) {
+                console.log(error);
+            }
         }
     },
     Mutation: {
-        nuevoUsuario: async (_, {input})=>{
+        nuevoUsuario: async (_, { input }) => {
 
 
-            const {email, password} = input;
+            const { email, password } = input;
 
             // Revisar si el usuario ya esta registrado
-            const existeUsuario = await Usuario.findOne({email});
+            const existeUsuario = await Usuario.findOne({ email });
             // console.log(existeUsuario);
 
 
-            if(existeUsuario){
-                throw new Error('El usuario ya está registrado') 
+            if (existeUsuario) {
+                throw new Error('El usuario ya está registrado')
             }
 
             // Hashear la pass
@@ -71,11 +79,11 @@ const resolvers = {
                 console.log(error);
             }
         },
-        autenticarUsuario: async (_, {input})=>{
+        autenticarUsuario: async (_, { input }) => {
             const { email, password } = input;
-            
+
             // Si el usuario existe
-            const existeUsuario = await Usuario.findOne({email});
+            const existeUsuario = await Usuario.findOne({ email });
             if (!existeUsuario) {
                 throw new Error('El usuario no existe');
             }
@@ -94,19 +102,19 @@ const resolvers = {
                 token: creatToken(existeUsuario, process.env.SECRETA, '24h')
             }
         },
-        nuevoProducto: async (_, {input})=>{
+        nuevoProducto: async (_, { input }) => {
             try {
                 const producto = new Producto(input);
                 // Almacenar en BD
                 const resultado = await producto.save();
 
-                return resultado; 
-                
+                return resultado;
+
             } catch (error) {
                 console.log(error);
             }
         },
-        actualizarProducto: async(_, {id, input})=>{
+        actualizarProducto: async (_, { id, input }) => {
             // Revisar si existe el producto
             const producto = await Producto.findById(id);
             if (!producto) {
@@ -115,10 +123,10 @@ const resolvers = {
 
             // Guardarlo en la BD
             // Lo actualiza en la misma linea
-            producto = await Producto.findOneAndUpdate({_id: id}, input, {new: true}); 
+            producto = await Producto.findOneAndUpdate({ _id: id }, input, { new: true });
             return producto;
         },
-        eliminarProducto: async(_, {id})=>{
+        eliminarProducto: async (_, { id }) => {
             // Revisar si existe el producto
             const producto = await Producto.findById(id);
             if (!producto) {
@@ -126,8 +134,38 @@ const resolvers = {
             }
 
             // eliminarlo de la BD
-            await Producto.findByIdAndDelete({_id: id}); 
+            await Producto.findByIdAndDelete({ _id: id });
             return "Producto eliminado";
+        },
+        nuevoCliente: async (_, { input }, ctx) => {
+
+            console.log(ctx);
+
+            const { email } = input.email;
+
+            // Verificar si el cliente ya esta registrado 
+            const cliente = await Cliente.findOne({ email });
+
+            if (cliente) {
+                throw new Error('Cliene ya registrado')
+            }
+
+            const nuevoCliente = new Cliente(input);
+
+
+            // Asignar vendedor
+            nuevoCliente.vendedor = ctx.usuario.id; 
+
+            // Guardar en bd
+
+            try {
+                const resultado = await nuevoCliente.save();
+
+                return resultado;
+            } catch (error) {
+                console.log(error);
+            }
+
         }
     }
 }
