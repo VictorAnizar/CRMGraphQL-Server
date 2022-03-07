@@ -31,7 +31,7 @@ const resolvers = {
         obtenerProducto: async (_, { id }) => {
 
             // Revisar si existe el producto
-            const producto = await Producto.findById(id);
+            let producto = await Producto.findById(id);
             if (!producto) {
                 throw new Error('No existe el error');
             }
@@ -42,7 +42,7 @@ const resolvers = {
         },
         obtenerClientes: async()=>{
             try {
-                const clientes = await Cliente.find({});
+                let clientes = await Cliente.find({});
                 return clientes;
             } catch (error) {
                 console.log(error);
@@ -50,7 +50,7 @@ const resolvers = {
         },
         obtenerClientesVendedor: async(_, {}, ctx)=>{
             try {
-                const clientes = await Cliente.find({vendedor: ctx.usuario.id.toString()});
+                let clientes = await Cliente.find({vendedor: ctx.usuario.id.toString()});
                 return clientes;
             } catch (error) {
                 console.log(error);
@@ -59,7 +59,7 @@ const resolvers = {
         },
         obtenerCliente: async(_, {id}, ctx)=>{
             // Revisar si el cliente existe
-            const cliente = await Cliente.findById(id);
+            let cliente = await Cliente.findById(id);
             if(!cliente){
                 throw new Error('El cliente no existe');
             }
@@ -188,6 +188,32 @@ const resolvers = {
                 console.log(error);
             }
 
+        },
+        actualizarCliente: async(_, {id, input}, ctx)=>{
+            // Revisar si existe el cliente
+            let cliente = await Cliente.findById(id);
+            if(!cliente){
+                throw new Error('No existe el cliente');
+            }
+            // Verificar que se actualiza un cliente propio
+            if(cliente.vendedor.toString()!==ctx.usuario.id){
+                throw new Error('No se puede modificar un cliente que no es tuyo');
+            }
+            cliente = await Cliente.findByIdAndUpdate({ _id: id }, input, {new: true});
+            return cliente
+        },
+        eliminarCliente: async(_, {id}, ctx)=>{
+            // Revisar si existe el cliente
+            let cliente = await Cliente.findById(id);
+            if(!cliente){
+                throw new Error('No existe el cliente');
+            }
+            // Verificar que se actualiza un cliente propio
+            if(cliente.vendedor.toString()!==ctx.usuario.id){
+                throw new Error('No se puede eliminar un cliente que no es tuyo');
+            }
+            await Cliente.findByIdAndDelete({ _id: id });
+            return 'Cliente eliminado';
         }
     }
 }
