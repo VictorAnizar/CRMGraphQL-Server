@@ -1,6 +1,6 @@
 const Usuario = require('../models/Usuario');
 const Producto = require('../models/Producto');
-
+const Cliente = require('../models/Cliente')
 
 const bcryptjs = require('bcryptjs');
 
