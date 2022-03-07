@@ -47,6 +47,28 @@ const resolvers = {
             } catch (error) {
                 console.log(error);
             }
+        },
+        obtenerClientesVendedor: async(_, {}, ctx)=>{
+            try {
+                const clientes = await Cliente.find({vendedor: ctx.usuario.id.toString()});
+                return clientes;
+            } catch (error) {
+                console.log(error);
+            }
+
+        },
+        obtenerCliente: async(_, {id}, ctx)=>{
+            // Revisar si el cliente existe
+            const cliente = await Cliente.findById(id);
+            if(!cliente){
+                throw new Error('El cliente no existe');
+            }
+            // Quien lo creo puede verlo
+            if (cliente.vendedor.toString()!==ctx.usuario.id) {
+                throw new Error('No tienes las credenciales');
+            }
+            return cliente;
+
         }
     },
     Mutation: {
