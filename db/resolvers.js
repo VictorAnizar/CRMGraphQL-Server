@@ -69,7 +69,97 @@ const resolvers = {
                 throw new Error('No tienes las credenciales');
             }
             return cliente;
+        },
+        obtenerPedidos: async()=>{
+            try {
+                let pedidos = await Pedido.find({});
+                return pedidos
+            } catch (error) {
+                console.log(error);
+            }
+        },
+        obtenerPedidosVendedor: async (_, {}, ctx)=>{
+            
+            try {
+                let pedidos = await Pedido.find({vendedor: ctx.usuario.id.toString()})
+                return pedidos;
+            } catch (error) {
+                console.log(error);
+            }
+        },obtenerPedido: async(_, {id}, ctx) => {
+            // Si el pedido existe o no
+            const pedido = await Pedido.findById(id);
+            if(!pedido) {
+                throw new Error('Pedido no encontrado');
+            }
 
+            // Solo quien lo creo puede verlo
+            if(pedido.vendedor.toString() !== ctx.usuario.id) {
+                throw new Error('No tienes las credenciales');
+            }
+
+            // retornar el resultado
+            return pedido;
+        }, 
+        obtenerPedidosEstado: async (_, { estado }, ctx) => {
+            const pedidos = await Pedido.find({ vendedor: ctx.usuario.id, estado });
+
+            return pedidos;
+        },
+        mejoresClientes: async () => {
+            const clientes = await Pedido.aggregate([
+                { $match : { estado : "COMPLETADO" } },
+                { $group : {
+                    _id : "$cliente", 
+                    total: { $sum: '$total' }
+                }}, 
+                {
+                    $lookup: {
+                        from: 'clientes', 
+                        localField: '_id',
+                        foreignField: "_id",
+                        as: "cliente"
+                    }
+                }, 
+                {
+                    $limit: 10
+                }, 
+                {
+                    $sort : { total : -1 }
+                }
+            ]);
+
+            return clientes;
+        }, 
+        mejoresVendedores: async () => {
+            const vendedores = await Pedido.aggregate([
+                { $match : { estado : "COMPLETADO"} },
+                { $group : {
+                    _id : "$vendedor", 
+                    total: {$sum: '$total'}
+                }},
+                {
+                    $lookup: {
+                        from: 'usuarios', 
+                        localField: '_id',
+                        foreignField: '_id',
+                        as: 'vendedor'
+                    }
+                }, 
+                {
+                    $limit: 3
+                }, 
+                {
+                    $sort: { total : -1 }
+                }
+            ]);
+
+            return vendedores;
+        },
+        buscarProducto: async(_, { texto }) => {
+            const productos = await Producto.find({ $text: { $search: texto  } }).limit(10)
+
+            return productos;
         }
     },
     Mutation: {
@@ -238,13 +328,20 @@ const resolvers = {
                 const producto = await Producto.findById(id);
                 if (articulo.cantidad > producto.existencia) {
                     throw new Error('El articulo excede la cantidad disponible');
+                }else{
+                    // Restar la cantidad a lo disponible
+                    producto.existencia = producto.existencia- articulo.cantidad;
+                    await producto.save(); 
                 }
             }
 
 
+            const nuevoPedido = new Pedido(input);
             // Asignarle un vendedor
-            // const nuevo
+            nuevoPedido.vendedor = ctx.usuario.id;
             // Guardarlo en la bd
+            const resultado = await nuevoPedido.save();
+            return resultado;
         }
     }
 }
